@@ -71,7 +71,7 @@ reference_trajectory = np.array(df)
 data_dim = reference_trajectory.shape[0]
 data_len = reference_trajectory.shape[1]
 
-dmp = dmp_discrete(n_dmps=data_dim, n_bfs=1000, dt=1.0/data_len)
+dmp = dmp_discrete(n_dmps=data_dim, n_bfs=1000, dt=1.0/data_len)# 建立离散dmp
 dmp.learning(reference_trajectory)
 
 reproduced_trajectory, _, _ = dmp.reproduce()

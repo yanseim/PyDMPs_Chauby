@@ -45,16 +45,17 @@ class dmp_rhythmic():
         self.psi_centers = np.linspace(0, 2*np.pi, self.n_bfs)# 相比离散就简单很多，直接均匀分布
         return self.psi_centers
 
-    def generate_psi(self, x):
+    # 矩阵行是不同的基函数，列是不同x================================================================
+    def generate_psi(self, x):# 这里x就是phi，r一直都是1
         if isinstance(x, np.ndarray):
             x = x[:, None]
-        self.psi = np.exp(self.h * (np.cos(x - self.psi_centers) - 1))
+        self.psi = np.exp(self.h * (np.cos(x - self.psi_centers) - 1))# x 1000*1, centers 1*200
 
         return self.psi
     
     def generate_weights(self, f_target):
         x_track = self.cs.run()
-        psi_track = self.generate_psi(x_track)
+        psi_track = self.generate_psi(x_track) # 
 
         for d in range(self.n_dmps):
             for b in range(self.n_bfs):
@@ -98,17 +99,21 @@ class dmp_rhythmic():
             plt.figure()
             plt.subplot(211)
             psi_track = self.generate_psi(self.cs.run())
-            plt.plot(psi_track)
+            plt.plot(np.linspace(1,1+self.cs.run_time,self.timesteps),psi_track)
+            plt.xlabel('time/s')
+            plt.ylabel('activation')
             plt.title('basis functions')
 
             # plot the desired forcing function vs approx
             plt.subplot(212)
             plt.plot(f_target[:,0])
-            plt.plot(np.sum(psi_track * self.w[0], axis=1) * self.dt)
+            plt.plot(30*np.sum(psi_track * self.w[0], axis=1) * self.dt)
             plt.legend(['f_target', 'w*psi'])
             plt.title('DMP forcing function')
             plt.tight_layout()
             plt.show()
+            # 做出基函数随时间的图来，发现discrete的每一个基是不对称的，rhythmic的是对称的，因为冯米塞斯函数是对称的，phi关于时间又是线性的。
+            # 图画出来和discrete有一样的问题，明明f_target学得这么差，为什么效果还可以?主要是f_target的幅度会特别大(到1k左右)，但拟合出来的RBF函数只能最大幅值到1
 
         # reset state
         self.reset_state()
@@ -170,13 +175,13 @@ if __name__ == "__main__":
 
     # DMP learning
     dmp = dmp_rhythmic(n_dmps=1, n_bfs=200, dt=2*np.pi/data_len)
-    dmp.learning(y_demo,plot=True)
+    dmp.learning(y_demo, plot=True)
 
     # DMP reproduce
     y_reproduce, dy_reproduce, ddy_reproduce = dmp.reproduce()
 
     # DMP reproduce with new goals and different r
-    y_reproduce_2, dy_reproduce_2, ddy_reproduce_2 = dmp.reproduce(tau=0.8, goal=[-1.0], r=[0.8])
+    y_reproduce_2, dy_reproduce_2, ddy_reproduce_2 = dmp.reproduce(tau=0.8, goal=[-0.5], r=[0.8])
     y_reproduce_3, dy_reproduce_3, ddy_reproduce_3 = dmp.reproduce(tau=1.2, goal=[1.0], r=[1.5])
 
     plt.figure(figsize=(10, 6))

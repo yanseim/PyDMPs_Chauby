@@ -94,7 +94,6 @@ class dmp_discrete():
                 # denom = np.sum(x_track * psi_track[:,b])
                 self.w[d, b] = numer / (denom*delta)
 
-
         return self.w
 
     # ====================================================================
@@ -138,8 +137,9 @@ class dmp_discrete():
             # f_target[:,d] = ddy_demo[d] - self.alpha_y[d]*(self.beta_y[d]*(self.goal[d] - y_demo[d]) - dy_demo[d])
 
             # ---------- Modified DMP in Schaal 2008, fixed the problem of g-y_0 -> 0
-            k = self.alpha_y[d]
-            f_target[:,d] = (ddy_demo[d] - self.alpha_y[d]*(self.beta_y[d]*(self.goal[d] - y_demo[d]) - dy_demo[d]))/k + x_track*(self.goal[d] - self.y0[d])
+            k = self.alpha_y[d]# K这个常数作者取alpha_y
+            f_target[:,d] = (ddy_demo[d] - self.alpha_y[d]*(self.beta_y[d]*(self.goal[d] - y_demo[d]) - dy_demo[d]))/k + x_track*(self.goal[d] - self.y0[d])# 学习的时候取tau=1
+
         
         self.generate_weights(f_target)
 
@@ -148,7 +148,9 @@ class dmp_discrete():
             plt.figure()
             plt.subplot(211)
             psi_track = self.generate_psi(self.cs.run())
-            plt.plot(psi_track)
+            plt.plot(np.linspace(0,self.cs.run_time,self.timesteps),psi_track)
+            plt.xlabel('time/s')
+            plt.ylabel('activation')
             plt.title('basis functions')
 
             # plot the desired forcing function vs approx
@@ -158,11 +160,12 @@ class dmp_discrete():
             plt.legend(['f_target', 'w*psi'])
             plt.title('DMP forcing function')
             plt.tight_layout()
-            plt.show()
+            # 图画出来明明f_target学得这么差，为什么效果还可以?主要是f_target的幅度会特别大，因为dt的影响，但拟合出来的RBF函数只能最大幅值到1
+            # 也许是因为DMP只需要学一个形状、变化趋势，这个学到了复制只要变化一下就可以
 
         # reset state
         self.reset_state()
-
+# 任意时间长的轨迹，有step和数据点，学的时候都是压缩到了1秒内，也就是1秒内分出那么多个数据点，基函数都在这一秒内分布.代码就是cs系统里面self.run_time = 1.0
 
     def reproduce(self, tau=None, initial=None, goal=None):
         # set temporal scaling
@@ -266,6 +269,36 @@ if __name__ == "__main__":
 
     # set new initial and goal poisitions
     y_reproduce_2, dy_reproduce_2, ddy_reproduce_2 = dmp.reproduce(tau=0.8, initial=[0.2, 0.8], goal=[0.5, 1.0])
+
+    plt.figure(figsize=(10, 5))
+    plt.plot(y_demo[0,:], 'g', label='demo sine')
+    plt.plot(y_reproduce[:,0], 'r--', label='reproduce sine')
+    plt.plot(y_reproduce_2[:,0], 'r-.', label='reproduce 2 sine')
+    plt.plot(y_demo[1,:], 'b', label='demo cosine')
+    plt.plot(y_reproduce[:,1], 'm--', label='reproduce cosine')
+    plt.plot(y_reproduce_2[:,1], 'm-.', label='reproduce 2 cosine')
+    plt.legend(loc="upper right")
+    plt.ylim(-1.5, 3)
+    plt.grid()
+    plt.xlabel('time')
+    plt.ylabel('y')
+
+    # ----------------- For my function
+    t = np.linspace(0, 2*np.pi, data_len)
+
+    y_demo = np.zeros((2, data_len))
+    y_demo[0,:] = 0.1*t
+    y_demo[1,:] = -0.1*t
+
+    # DMP learning
+    dmp = dmp_discrete(n_dmps=y_demo.shape[0], n_bfs=100, dt=1.0/data_len)
+    dmp.learning(y_demo, plot=False)
+
+    # reproduce learned trajectory
+    y_reproduce, dy_reproduce, ddy_reproduce = dmp.reproduce()
+
+    # set new initial and goal poisitions
+    y_reproduce_2, dy_reproduce_2, ddy_reproduce_2 = dmp.reproduce(tau=0.5)
 
     plt.figure(figsize=(10, 5))
     plt.plot(y_demo[0,:], 'g', label='demo sine')

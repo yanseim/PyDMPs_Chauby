@@ -22,7 +22,7 @@ class CanonicalSystem():
         else:
             print('Initialize Canonical system failed, can not recognize DMP type: ' + type)
         
-        self.timesteps = round(self.run_time/self.dt)
+        self.timesteps = round(self.run_time/self.dt)# timestep=500步
         self.reset_state()
 
     def run(self, **kwargs): # run to goal state
@@ -46,7 +46,7 @@ class CanonicalSystem():
         return self.x_track
     
     def reset_state(self): # reset state
-        self.x = 1.0
+        self.x = 1.0 #注意discrete是从1到0；rhythmic是从1到1+2pi，按常规应该0到2pi，但是这样也没有什么影响
 
     def step_discrete(self, tau=1.0):
         dx = -self.alpha_x*self.x*self.dt

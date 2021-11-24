@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+# 这就只是个记录的python文件，真正轨迹写在vrep里面
 #%% import package
 import time
 import numpy as np
@@ -71,11 +71,11 @@ pos_record_z = list()
 record_enable = False
 
 while True:
-    _, UR5_target_pos = vrep_sim.simxGetObjectPosition(client_ID, UR5_target_dummy_handle, -1, vrep_sim.simx_opmode_oneshot)
+    _, UR5_target_pos = vrep_sim.simxGetObjectPosition(client_ID, UR5_target_dummy_handle, -1, vrep_sim.simx_opmode_oneshot)# 得到UR5_target的位置
 
-    if (record_enable == False) and (np.sqrt((UR5_target_pos[0] - initial_pos[0])**2 + (UR5_target_pos[1] - initial_pos[1])**2 + (UR5_target_pos[2] - initial_pos[2])**2) < 0.005):
+    if (record_enable == False) and (np.sqrt((UR5_target_pos[0] - initial_pos[0])**2 + (UR5_target_pos[1] - initial_pos[1])**2 + (UR5_target_pos[2] - initial_pos[2])**2) < 0.005):# 如果距离初始点很近，并且flag=false就开始record
         record_enable = True
-    if (np.sqrt((UR5_target_pos[0] - goal_pos[0])**2 + (UR5_target_pos[1] - goal_pos[1])**2 + (UR5_target_pos[2] - goal_pos[2])**2) < 0.005):
+    if (np.sqrt((UR5_target_pos[0] - goal_pos[0])**2 + (UR5_target_pos[1] - goal_pos[1])**2 + (UR5_target_pos[2] - goal_pos[2])**2) < 0.005):# 如果距离目标点很近，并且flag=true就结束record，并break
         record_enable = False
         break
 
